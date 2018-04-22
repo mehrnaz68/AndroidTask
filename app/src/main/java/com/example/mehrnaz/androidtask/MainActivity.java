@@ -1,8 +1,6 @@
 package com.example.mehrnaz.androidtask;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -22,10 +20,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     //the URL having the json data
     private static final String JSON_URL = "https://api.whichapp.com/v1/countries";
-    List<Country> countryList = new ArrayList<>();
-    public static final String MY_PREFS_NAME = "CountriesPrefsFile";
+    public static List<Country> countryList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,48 +61,32 @@ public class MainActivity extends AppCompatActivity {
                             //getting the whole json array from the response
                             JSONArray countryArray = new JSONArray(response);
 
-                            //now looping through all the elements of the json array
-                            for (int i = 0; i < countryArray.length(); i++) {
+                            //fetch countries information from database
+                            countryList = CountryORM.getCountries(getApplicationContext());
 
-                                try {
-                                    // Pulling items from the array
-                                    JSONObject countryObject = countryArray.getJSONObject(i);
-
-                                    //creating a country object and giving them the values from json object
-                                    Country country = new Country(countryObject.getString("iso"), countryObject.getString("name"), countryObject.getString("phone"));
-
-                                    //adding the country to countryList
-                                    countryList.add(country);
-
-                                    //upload countries information into database
-                                    CountryORM.insertCountry(getApplicationContext(), country);
-
-                                    //Caching countries information by sharedPreferences
-                                    SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit();
-                                    editor.putString("iso", countryObject.getString("iso"));
-                                    editor.putString("name", countryObject.getString("name"));
-                                    editor.putString("phone", countryObject.getString("phone"));
-                                    editor.apply();
+                            //if data is uploaded in the database or not
+                            if (countryList.size() != countryArray.length()) {
+                                //now looping through all the elements of the json array
+                                for (int i = 0; i < countryArray.length(); i++) {
 
                                     try {
-                                        FileOutputStream fileOutputStream = null;
+                                        // Pulling items from the array
+                                        JSONObject countryObject = countryArray.getJSONObject(i);
 
-                                        fileOutputStream = getApplicationContext().openFileOutput("country.txt", Context.MODE_PRIVATE);
-                                        ObjectOutputStream objectOutputStream = null;
-                                        objectOutputStream = new ObjectOutputStream(fileOutputStream);
-                                        objectOutputStream.writeObject(countryList);
-                                        objectOutputStream.close();
-                                    } catch (FileNotFoundException e) {
-                                        e.printStackTrace();
-                                    } catch (IOException e) {
+                                        //creating a country object and giving them the values from json object
+                                        Country country = new Country(countryObject.getString("iso"), countryObject.getString("name"), countryObject.getString("phone"));
+
+                                        //adding the country to countryList
+                                        countryList.add(country);
+                                        //upload countries information into database
+                                        CountryORM.insertCountry(getApplicationContext(), country);
+
+                                    } catch (JSONException e) {
+                                        // Oops
                                         e.printStackTrace();
                                     }
 
-                                } catch (JSONException e) {
-                                    // Oops
-                                    e.printStackTrace();
                                 }
-
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();

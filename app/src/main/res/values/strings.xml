@@ -3,4 +3,5 @@
     <string name="btn_getCountries">Click me!</string>
     <string name="txt_getCountries">Click the button below to get countries information.</string>
     <string name="header_text">Header Section</string>
+    <string name="footer_text">Footer Section</string>
 </resources>
